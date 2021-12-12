@@ -1,0 +1,27 @@
+name: CI
+
+on: [push]
+
+jobs:
+  build_test:
+    name: build test
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout Repo
+      uses: actions/checkout@master
+    - name: setup Node
+      uses: actions/setup-node@v1
+      with: 
+        node-version: 14.x
+        registry-url: 'https://registry.npmjs.org'
+    - name: Install Dependencies
+      run: npm install
+    - name: Build
+      run: cd functions&&npm i &&npm run build
+      
+    - name: install fire-base-tools
+      run: |
+        npm i -g firebase-tools
+    - name: deploy to Firebase Hosting
+      run: |
+        firebase deploy --token=${{ secrets.FIREBASE_TOKEN }}
