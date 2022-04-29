@@ -1,44 +1,59 @@
-import { useState } from 'react'
-import logo from './logo.svg'
+import axios from 'axios'
+import React from 'react'
+import { render } from 'react-dom'
 
-const App: React.VFC = () => {
-  const [count, setCount] = useState(0)
+class App extends React.Component {
+  constructor() {
+    super()
+    this.state = { Debt: [] }
+  }
 
-  return (
-    <div className='text-center'>
-      <header className='bg-slate-700 min-h-screen flex flex-col align-center justify-center text-3xl text-white'>
-        <img src={logo} className='h-72' alt='logo' />
-        <p className='text-4xl'>Hello Vite + React!</p>
-        <p className='my-5'>
-          count is:
-          <button
-            type='button'
-            className='bg-gray-50 hover:bg-gray-100 text-black p-2 mx-2'
-            onClick={() => setCount((count) => count + 1)}
-          >
-            {count}
-          </button>
-        </p>
-        <p className='my-2'>
-          Edit <code>App.tsx</code> and save to test HMR updates.
-        </p>
-        <p className='my-2'>
-          <a className='text-cyan-300' href='https://reactjs.org' target='_blank' rel='noopener noreferrer'>
-            Learn React
-          </a>
-          {' | '}
-          <a
-            className='text-cyan-300'
-            href='https://vitejs.dev/guide/features.html'
-            target='_blank'
-            rel='noopener noreferrer'
-          >
-            Vite Docs
-          </a>
-        </p>
-      </header>
-    </div>
-  )
+  debtList(list) {
+    const debtList = list.map((debt, index) => {
+      return (
+        <tr>
+          <td className='border px-4 py-2'>{debt.User} </td>
+          <td className='border px-4 py-2'>{debt.Price}</td>
+        </tr>
+      )
+    })
+
+    return (
+      <table className='table-auto'>
+        <thead>
+          <tr>
+          <th className='px-4 py-2'>User</th>
+          <th className='px-4 py-2'>Price</th>
+          </tr>
+        </thead>
+        <tbody>{debtList}</tbody>
+      </table>
+    )
+  }
+
+  render() {
+    console.log(this.state.debt)
+    return (
+      <div>
+        <button
+          className='bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded'
+          onClick={this.getJson}
+        >
+          Get Json
+        </button>
+        {this.debtList(this.state.Debt)}
+      </div>
+    )
+  }
+
+  getJson = () => {
+    const url="https://asia-northeast1-cyph-264010.cloudfunctions.net/api/debt";
+    // const url = 'http://localhost:5011/cyph-264010/asia-northeast1/api/debt'
+    axios.get(url).then((res) => {
+      this.setState(res.data)
+      console.log(res.data)
+    })
+  }
 }
 
 export default App

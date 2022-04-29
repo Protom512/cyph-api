@@ -1,17 +1,14 @@
 const functions = require("firebase-functions");
 
-
 const express = require("express");
 const morgan = require("morgan");
 const helmet = require("helmet");
 const cors = require("cors");
 
-
 require("dotenv").config();
 
-
 // Import the functions you need from the SDKs you need
-const admin=require( "firebase-admin");
+const admin = require("firebase-admin");
 
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
@@ -29,13 +26,10 @@ const firebaseConfig = {
   measurementId: "G-T17PWDDYQ6",
 };
 
-
 const middlewares = require("./middlewares");
 const api = require("./api");
 
-
 const adm = admin.initializeApp(firebaseConfig);
-
 
 const app = express();
 
@@ -43,14 +37,6 @@ app.use(morgan("dev"));
 app.use(helmet());
 app.use(cors());
 app.use(express.json());
-
-app.get("/", (req, res) => {
-  functions.logger.debug(req, {structuredData: true});
-  res.json({
-    message: "🦄🌈✨👋🌎🌍🌏✨🌈🦄",
-  });
-});
-
 
 app.post("/report", (req, res) => {
   functions.logger.debug(req, {structuredData: true});
@@ -62,31 +48,35 @@ app.post("/report", (req, res) => {
     return res.status(400).json({body: "paidBy must not be empty"});
   }
 
-  const newReport={
+  const newReport = {
     price: req.body.price,
     paidFor: req.body.paidFor,
     paidBy: req.body.paidBy,
     paidAt: new Date().toISOString(),
     createdAt: new Date().toISOString(),
   };
-  adm.firestore().collection("reports")
+  adm
+      .firestore()
+      .collection("reports")
       .add(newReport)
-      .then(
-          (doc)=>{
-            res.json({message: `document ${doc.id} created successfully`});
-          }
-      ).catch((err)=>{
+      .then((doc) => {
+        res.json({message: `document ${doc.id} created successfully`});
+      })
+      .catch((err) => {
         res.status(500).json({error: "something went wrong"});
         console.error(err);
       });
 });
 
-app.get("/reports", (req, res)=>{
-  adm.firestore().collection("reports").orderBy("createdAt", "desc")
+app.get("/reports", (req, res) => {
+  adm
+      .firestore()
+      .collection("reports")
+      .orderBy("createdAt", "desc")
       .get()
-      .then((doc)=>{
-        const reports=[];
-        doc.forEach((data)=>{
+      .then((doc) => {
+        const reports = [];
+        doc.forEach((data) => {
           reports.push({
             reportId: data.id,
             price: data.data().price,
@@ -96,54 +86,78 @@ app.get("/reports", (req, res)=>{
           });
         });
         return res.json(reports);
-      }).catch((err)=>{
+      })
+      .catch((err) => {
         res.status(500).json({error: "something went wrong"});
         console.error(err);
       });
 });
 
-app.get("/debt", (req, res)=>{
-  adm.firestore().collection("reports").orderBy("createdAt", "desc")
+app.get("/debt", (req, res) => {
+  adm
+      .firestore()
+      .collection("reports")
+      .orderBy("createdAt", "desc")
       .get()
-      .then((doc)=>{
-        const reports={};
-        doc.forEach((data)=>{
-          console.debug(reports);
-          const count=data.data().paidFor.length+1;
-          const amari= data.data().price % count;
+      .then((doc) => {
+        const result = [];
+        doc.forEach((data) => {
+          const count = data.data().paidFor.length + 1;
+          const amari = data.data().price % count;
           // arrayの個数カウント＋１
-          const baseCost=(data.data().price-amari)/count;
+          const baseCost = (data.data().price - amari) / count;
           // 金額を個数で割る
-          if (data.data().paidBy in reports) {
-            reports[data.data().paidBy] += (baseCost*(count -1 )+amari);
+
+          const hoge = result.find((v) => v.User == data.data().paidBy);
+          if (hoge) {
+            hoge.Price += baseCost * (count - 1) + amari;
+          // functions.logger.info(hoge.Price);
           } else {
-            reports[data.data().paidBy] = baseCost*(count-1)+amari;
+            result.push({
+              User: data.data().paidBy,
+              Price: baseCost * (count - 1) + amari,
+            });
           }
-          data.data().paidFor.forEach((user)=>{
-            if (user in reports) {
-              reports[user] -= (baseCost);
+
+          for (let i=0; i< data.data().paidFor.length; ++i) {
+            const TargetUser=data.data().paidFor[i];
+            const hoge = result.find((v) => v.User == TargetUser);
+
+            if (hoge) {
+              hoge.Price -= baseCost;
             } else {
-              reports[user] = 0- baseCost;
+              result.push({
+                User: TargetUser,
+                Price: 0-baseCost,
+              });
             }
-          });
+          }
         });
-        return res.json(reports);
-      }).catch((err)=>{
+        const results={"Debt": result}
+        functions.logger.debug(result);
+        return res.json(results);
+      })
+      .catch((err) => {
         res.status(500).json({error: "something went wrong"});
-        console.error(err);
+        functions.logger.error(err);
       });
 });
 
-app.delete("/reports", (req, res)=>{
-  adm.firestore().collection("reports").listDocuments().then((doc)=>{
-    doc.map((doc)=>{
-      doc.delete();
-    });
-    res.json({message: "deleted documents successfully"});
-  }).catch((err)=>{
-    res.status(500).json({error: "something went wrong"});
-    console.error(err);
-  });
+app.delete("/reports", (req, res) => {
+  adm
+      .firestore()
+      .collection("reports")
+      .listDocuments()
+      .then((doc) => {
+        doc.map((doc) => {
+          doc.delete();
+        });
+        res.json({message: "deleted documents successfully"});
+      })
+      .catch((err) => {
+        res.status(500).json({error: "something went wrong"});
+        console.error(err);
+      });
 });
 app.use("/v1", api);
 

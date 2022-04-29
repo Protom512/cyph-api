@@ -1,7 +1,10 @@
 module.exports = {
-  content: ['index.html','src/**/*.{ts,tsx}'],
+  content: ['index.html', 'src/**/*.{ts,tsx}'],
+  variants: {
+    tableLayout: ['responsive', 'hover', 'focus'],
+  },
   theme: {
     extend: {},
   },
-  plugins: [],
+  plugins: [require('@tailwindcss/forms')],
 }
