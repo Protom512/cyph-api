@@ -23,25 +23,25 @@ jobs:
           npm i -g firebase-tools
       - name: deploy to Firebase Functions
         run: |
-          firebase deploy --token=${{ secrets.FIREBASE_TOKEN }}
-  # build_test_hostings:
-  #   name: build test of hostings
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - name: Checkout Repo
-  #       uses: actions/checkout@master
-  #     - name: setup Node
-  #       uses: actions/setup-node@v1
-  #       with:
-  #         node-version: 16.x
-  #         registry-url: "https://registry.npmjs.org"
+          firebase deploy --token=${{ secrets.FIREBASE_TOKEN }} --only functions
+  build_test_hostings:
+    name: build test of hostings
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@master
+      - name: setup Node
+        uses: actions/setup-node@v1
+        with:
+          node-version: 16.x
+          registry-url: "https://registry.npmjs.org"
 
-  #     - name: Build
-  #       run: cd hostings&&npm i &&npm run build
+      - name: Build
+        run: cd hostings&&npm i &&npm run build
 
-  #     - name: install firebase-tools
-  #       run: |
-  #         npm i -g firebase-tools
-  #     - name: deploy to Firebase Hosting
-  #       run: |
-  #         firebase deploy --token=${{ secrets.FIREBASE_TOKEN }}
+      - name: install firebase-tools
+        run: |
+          npm i -g firebase-tools
+      - name: deploy to Firebase Hosting
+        run: |
+          firebase deploy --token=${{ secrets.FIREBASE_TOKEN }} --only hosting
